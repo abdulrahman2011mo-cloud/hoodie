@@ -1,0 +1,502 @@
+</head>
+
+<body>
+
+<div id="cart-btn" onclick="toggleCart()">🛒 Cart (<span id="cart-count">0</span>)</div>
+
+<div id="cart">
+  <h3>Your Cart</h3>
+  <div id="cart-items"></div>
+  <div class="cart-total">
+    <span>Total:</span>
+    <span>$<span id="cart-total">0.00</span></span>
+  </div>
+  <div class="cart-actions">
+    <button class="btn-clear" onclick="clearCart()">Clear Cart</button>
+    <button class="btn-checkout" onclick="checkout()">Checkout</button>
+  </div>
+</div>
+
+<header>
+  <h1>Core Elite</h1>
+  <p>Elite-level speed boots engineered for professionals. Maximum acceleration, control, and precision.</p>
+</header>
+
+<section class="product-container">
+  <div class="product">
+    <div class="product-image">
+      <img id="shoe1" src="https://github.com/aalsheikh270-svg/skydrive1/blob/main/gray.png?raw=true" alt="AeroFlow Pro">
+    </div>
+    
+    <div class="product-details">
+      <h2>AeroFlow Pro</h2>
+      <p>Built to perform in any condition, our jackets are fully waterproof, offering reliable protection from rain and wind. Lightweight yet durable, they combine functionality with a sleek athletic design for all-weather performance.
+.</p>
+      <div class="price">$40</div>
+
+      <div class="colors">
+        <label>Color:</label>
+        <div class="color" style="background:#38373f" onclick="changeColor(this, 'gray')" title="gray"></div>
+        <div class="color" style="background:#293865" onclick="changeColor(this, 'blue')" title="blue"></div>
+        <div class="color active" style="background:#1d1b22" onclick="changeColor(this, 'black')" title="black"></div>
+        <div class="color" style="background:#ffffff; border-color:#6c6c6c" onclick="changeColor(this, 'white')" title="White"></div>
+      </div>
+
+
+      <div class="sizes-section">
+        <label>Size:</label>
+        <div class="sizes" id="sizes1">
+          <div class="size" onclick="selectSize(this)">XS</div>
+          <div class="size" onclick="selectSize(this)">S</div>
+          <div class="size" onclick="selectSize(this)">M</div>
+          <div class="size" onclick="selectSize(this)">L</div>
+          <div class="size" onclick="selectSize(this)">XL</div>
+          <div class="size" onclick="selectSize(this)">XXL</div>
+        </div>
+      </div>
+
+      <button onclick="addToCart('Core Elite', 70, 'sizes1')">Add to Cart</button>
+    </div>
+  </div>
+</section>
+
+<script>
+const UNIFIED_CART_KEY = 'unified_store_cart';
+
+const images = {
+  gray: "https://github.com/aalsheikh270-svg/skydrive1/blob/main/gray.png?raw=true",
+  black: "https://github.com/aalsheikh270-svg/skydrive1/blob/main/black.png?raw=true",
+  blue: "https://github.com/aalsheikh270-svg/skydrive1/blob/main/blue.png?raw=true",
+  white: "https://github.com/aalsheikh270-svg/skydrive1/blob/main/gray.png?raw=true"
+};
+
+function changeColor(element, color) {
+  // Remove active class from all colors
+  document.querySelectorAll('.color').forEach(c => c.classList.remove('active'));
+  // Add active class to clicked color
+  element.classList.add('active');
+  
+  // Change image
+  const img = document.getElementById('shoe1');
+  img.style.opacity = 0;
+  setTimeout(() => {
+    img.src = images[color];
+    img.style.opacity = 1;
+  }, 150);
+}
+
+function selectSize(element) {
+  // Remove active class from all sizes
+  document.querySelectorAll('.size').forEach(s => s.classList.remove('active'));
+  // Add active class to clicked size
+  element.classList.add('active');
+}
+
+function getSelectedSize(containerId) {
+  const container = document.getElementById(containerId);
+  const active = container.querySelector(".active");
+  return active ? active.textContent : null;
+}
+
+function loadCart() {
+  try {
+    return JSON.parse(localStorage.getItem(UNIFIED_CART_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCart(cart) {
+  localStorage.setItem(UNIFIED_CART_KEY, JSON.stringify(cart));
+}
+
+function addToCart(name, price, sizeContainer) {
+  const size = getSelectedSize(sizeContainer);
+  
+  if (!size) {
+    alert("Please select a size first.");
+    return;
+  }
+
+  let cart = loadCart();
+  const existingIndex = cart.findIndex(item => item.name === name && item.size === size);
+  
+  if (existingIndex > -1) {
+    cart[existingIndex].qty += 1;
+  } else {
+    cart.push({ name, price, size, qty: 1 });
+  }
+  
+  saveCart(cart);
+  updateCart();
+  alert(`${name} (Size ${size}) added to cart!`);
+}
+
+function removeItem(index) {
+  let cart = loadCart();
+  cart.splice(index, 1);
+  saveCart(cart);
+  updateCart();
+}
+
+function changeQty(index, delta) {
+  let cart = loadCart();
+  cart[index].qty = Math.max(1, cart[index].qty + delta);
+  saveCart(cart);
+  updateCart();
+}
+
+function updateCart() {
+  const cart = loadCart();
+  const cartItems = document.getElementById("cart-items");
+  const cartCount = document.getElementById("cart-count");
+  const cartTotal = document.getElementById("cart-total");
+
+  cartItems.innerHTML = "";
+  let total = 0;
+  let itemCount = 0;
+
+  cart.forEach((item, index) => {
+    total += item.price * item.qty;
+    itemCount += item.qty;
+
+    const div = document.createElement("div");
+    div.className = "cart-item";
+    div.innerHTML = `
+      <div class="cart-item-info">
+        <strong>${item.name}</strong>
+        <small>Size: ${item.size} | ${item.price.toFixed(2)} × ${item.qty}</small>
+      </div>
+      <div class="cart-controls">
+        <div>
+          <button onclick="changeQty(${index}, -1)">−</button>
+          <button onclick="changeQty(${index}, 1)">+</button>
+        </div>
+        <button onclick="removeItem(${index})" style="background:red;color:white;border-radius:50%;width:30px;height:30px;">×</button>
+      </div>
+    `;
+    cartItems.appendChild(div);
+  });
+
+  cartCount.textContent = itemCount;
+  cartTotal.textContent = total.toFixed(2);
+}
+
+function toggleCart() {
+  const cartEl = document.getElementById("cart");
+  cartEl.style.display = cartEl.style.display === "block" ? "none" : "block";
+}
+
+function clearCart() {
+  if (confirm("Are you sure you want to clear your cart?")) {
+    saveCart([]);
+    updateCart();
+  }
+}
+
+function checkout() {
+  const cart = loadCart();
+  if (cart.length === 0) {
+    alert("Your cart is empty.");
+    return;
+  }
+  alert("Checkout complete! Thank you for your purchase.");
+  saveCart([]);
+  updateCart();
+  toggleCart();
+}
+
+window.addEventListener('storage', function(e) {
+  if (e.key === UNIFIED_CART_KEY) {
+    updateCart();
+  }
+});
+
+updateCart();
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AeroFlow Pro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+* { box-sizing: border-box; margin:0; padding:0; font-family: Arial, sans-serif; }
+
+body { background:#f4f4f4; color:#111; }
+
+#cart-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: black;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 30px;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  font-weight: bold;
+  transition: all 0.3s;
+}
+
+#cart-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+#cart {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 350px;
+  max-height: 500px;
+  overflow-y: auto;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  padding: 20px;
+  display: none;
+  z-index: 1000;
+}
+
+#cart h3 {
+  margin: 0 0 15px 0;
+  font-size: 22px;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 10px;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.cart-item:last-child {
+  border-bottom: none;
+}
+
+.cart-item-info {
+  flex: 1;
+}
+
+.cart-item-info strong {
+  display: block;
+  font-size: 15px;
+  margin-bottom: 5px;
+}
+
+.cart-item-info small {
+  font-size: 12px;
+  color: #666;
+}
+
+.cart-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.cart-controls button {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.cart-total {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 2px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.cart-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.cart-actions button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+
+.btn-checkout {
+  background: black;
+  color: white;
+}
+
+.btn-checkout:hover {
+  background: #333;
+}
+
+.btn-clear {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.btn-clear:hover {
+  background: #d0d0d0;
+}
+
+header {
+  background: linear-gradient(rgba(0,0,0,.6), rgba(0,0,0,.6)),
+              url("https://img-volc.jianpian.info/super/super/overseas/poster/1000/1767659242997_1000_EQFRW.png~tplv-flrovnc8r8-s3-cC-q:0:0:0:0:q75.webp");
+  background-size: cover;
+  background-position: center;
+  color:white;
+  padding:100px 40px;
+  text-align:center;
+}
+header h1 { font-size:48px; margin-bottom:10px; }
+header p { font-size:18px; max-width:700px; margin:auto; }
+
+.product-container {
+  max-width:1200px;
+  margin:50px auto;
+  padding:0 20px;
+}
+
+.product {
+  background:white;
+  border-radius:18px;
+  padding:40px;
+  box-shadow:0 10px 25px rgba(0,0,0,.08);
+  display: flex;
+  gap: 40px;
+  align-items: center;
+}
+
+.product-image {
+  flex: 1;
+  max-width: 500px;
+}
+
+.product-image img {
+  width:100%;
+  border-radius:12px;
+  transition:opacity .3s;
+}
+
+.product-details {
+  flex: 1;
+}
+
+.product h2 { font-size:32px; margin-bottom:15px; }
+.product p { margin-bottom:20px; line-height: 1.6; color: #555; }
+.price { font-size:28px; font-weight:bold; margin-bottom:20px; color: #000; }
+
+.colors { 
+  display:flex; 
+  gap:12px; 
+  margin-bottom:20px; 
+  align-items: center;
+}
+
+.colors label {
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.color {
+  width:35px;
+  height:35px;
+  border-radius:50%;
+  border:3px solid #ddd;
+  cursor:pointer;
+  transition: all 0.3s;
+}
+
+.color:hover {
+  border-color: #666;
+  transform: scale(1.1);
+}
+
+.color.active {
+  border-color: #000;
+  border-width: 4px;
+  transform: scale(1.15);
+}
+
+.sizes-section {
+  margin-bottom: 25px;
+}
+
+.sizes-section label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.sizes {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.size {
+  padding:10px 18px;
+  border:2px solid #ddd;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:15px;
+  font-weight: 600;
+  transition: all 0.3s;
+  background: white;
+}
+
+.size:hover {
+  border-color: #666;
+  background: #f9f9f9;
+}
+
+.size.active {
+  background:black;
+  color:white;
+  border-color: black;
+}
+
+button {
+  width:100%;
+  padding:15px;
+  border:none;
+  border-radius:25px;
+  background:black;
+  color:white;
+  cursor:pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+button:hover { 
+  background:#333;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+@media (max-width: 768px) {
+  .product {
+    flex-direction: column;
+  }
+  
+  .product-image {
+    max-width: 100%;
+  }
+}
